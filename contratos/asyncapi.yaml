@@ -1,0 +1,73 @@
+
+asyncapi: 3.1.0
+
+info:
+  title: VixCommerce Events API
+  version: 1.0.0
+  description: Contrato de eventos assíncronos do VixCommerce.
+
+servers:
+  rabbitmq:
+    host: localhost:5672
+    protocol: amqp
+    description: Servidor local RabbitMQ
+    protocolVersion: "0-9-1"
+
+channels:
+  orderCreated:
+    address: order.created
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: vixcommerce.events
+          type: topic
+          durable: true
+    messages:
+      orderCreated:
+        $ref: '#/components/messages/OrderCreated'
+
+operations:
+  receiveOrderCreated:
+    action: receive
+    channel:
+      $ref: '#/channels/orderCreated'
+    summary: Receber evento de pedido criado pelo RabbitMQ.
+
+components:
+  messages:
+    OrderCreated:
+      name: OrderCreated
+      title: Pedido criado
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - eventId
+          - eventType
+          - data
+        properties:
+          eventId:
+            type: string
+            format: uuid
+          eventType:
+            type: string
+            const: order.created
+          data:
+            type: object
+            properties:
+              orderId:
+                type: string
+              status:
+                type: string
+              customerId:
+                type: string
+              items:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    sku:
+                      type: string
+                    quantity:
+                      type: integer
